@@ -75,7 +75,7 @@
 <div class="win" id="w2"><div class="tb"><div class="ic"></div><b>Ultardio</b><u>_</u><u>▫</u><u>x</u></div><div class="body">How ultardio are you?<div class="sl"><span>Low</span><input type="range" id="rg" value="60"><span>High</span></div><div class="lcd"><span id="lt">terminally online</span><i class="ic" style="width:24px;height:24px"></i></div>
 <div class="sb"><span>Press F1 for help</span><span>Slide 1</span><span id="cpu">CPU Usage: 11%</span></div></div></div>
 <div class="win" id="w3"><div class="tb"><div class="ic"></div><b>Ultardio</b><u>_</u><u>▫</u><u>x</u></div><div class="body"><div class="frame pic"><span class="cap">ultardio.png</span></div></div></div>
-<div class="win" id="w4"><div class="tb"><div class="ic"></div><b>Music Player</b><u>_</u><u>▫</u><u>x</u></div><div class="body" style="padding:15px;text-align:center">
+<div class="win" id="w4"><div class="tb"><div class="ic"></div><b>Music Player</b><u>_</u><u>▫</u><u onclick="document.getElementById('w4').style.display='none';document.getElementById('musicTask').style.display='flex'">_</u></div><div class="body" style="padding:15px;text-align:center">
 <div id="player-container" style="display:none"></div>
 <div class="music-controls" style="background:#000;border:2px solid;border-color:#555 #fff #fff #555;padding:15px">
 <div style="font:18px VT323,monospace;color:#00e5ff;margin-bottom:10px">🎵 NOW PLAYING</div>
@@ -100,14 +100,14 @@
 
 
 
-<div id="task"><a class="s" href="#w1"><span style="font-size:18px">⊞</span>Start</a><a href="#w1"><i class="ic"></i>Ultardio</a><a href="#w2"><i class="ic"></i>Ultardio Meter</a><a href="#w3"><i class="ic"></i>ultardio.png</a><a href="#w5"><i class="ic"></i>$ULTARDIO Chart</a><a href="#w6"><i class="ic"></i>Contract Address</a><div id="clk">14:46</div></div>
+<div id="task"><a class="s" href="#w1"><span style="font-size:18px">⊞</span>Start</a><a href="#w1"><i class="ic"></i>Ultardio</a><a href="#w2"><i class="ic"></i>Ultardio Meter</a><a href="#w3"><i class="ic"></i>ultardio.png</a><a id="musicTask" href="#w4" onclick="document.getElementById('w4').style.display='block';this.style.display='none'" style="display:none"><i class="ic"></i>Music Player</a><a href="#w5"><i class="ic"></i>$ULTARDIO Chart</a><a href="#w6"><i class="ic"></i>Contract Address</a><div id="clk">14:46</div></div>
 <script>
 var pb=document.getElementById('pb'),n=0,t=setInterval(function(){n=Math.min(100,n+Math.random()*12);pb.style.width=n+'%';if(n>=100)clearInterval(t)},180);
 document.getElementById('enter').onclick=function(){document.getElementById('land').style.display='none';document.getElementById('desk').style.display='block';mx()};
 var rg=document.getElementById('rg');rg.oninput=function(){var v=+rg.value;document.getElementById('lt').textContent=v<25?'mildly normie':v<50?'getting there':v<80?'terminally online':'FULL ULTARDIO';document.getElementById('cpu').textContent='CPU Usage: '+Math.round(v/2+5)+'%'};
 function clk(){var d=new Date();document.getElementById('clk').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}clk();setInterval(clk,30000);
 var st=document.createElement('style');st.textContent='.tb u{cursor:pointer;user-select:none}.tb u:active{border-color:#404040 #fff #fff #404040}.win.big{position:fixed;left:6px;right:6px;top:6px;bottom:50px;z-index:25;overflow:auto;margin:0}';document.head.appendChild(st);
-document.querySelectorAll('.win').forEach(function(w){var u=w.querySelectorAll('.tb u'),b=w.querySelector('.body');u[0].onclick=function(){b.style.display=b.style.display=='none'?'':'none'};u[1].onclick=function(){w.classList.toggle('big')};if(w.id=='w1'){u[2].style.opacity='.45';u[2].style.cursor='not-allowed';u[2].title='This one stays'}else{u[2].onclick=function(){w.classList.remove('big');w.style.display='none'}}});
+document.querySelectorAll('.win').forEach(function(w){var u=w.querySelectorAll('.tb u'),b=w.querySelector('.body');u[0].onclick=function(){b.style.display=b.style.display=='none'?'':'none'};u[1].onclick=function(){w.classList.toggle('big')};if(w.id=='w1'){u[2].style.opacity='.45';u[2].style.cursor='not-allowed';u[2].title='This one stays'}else if(w.id=='w4'){u[2].style.cursor='pointer';u[2].style.opacity='1'}else{u[2].onclick=function(){w.classList.remove('big');w.style.display='none'}}});
 document.querySelectorAll('#task a[href^="#w"]').forEach(function(a){a.addEventListener('click',function(){var w=document.querySelector(a.getAttribute('href'));if(!w)return;w.style.display='';w.querySelector('.body').style.display=''})});
 
 var PAIR='https://api.dexscreener.com/latest/dex/pairs/cronos/0x196796a6443e186f3c73c2a5671f14124044edfc';
@@ -131,6 +131,6 @@ for(var i=0;i<70;i++){var op=p,cl=p+(Math.random()-.46)*26;p=Math.max(80,Math.mi
 function randomLetterPulse(){var spans=document.querySelectorAll('.logo span');spans.forEach(function(span){span.style.animation='letterPulse 1s ease-in-out infinite';span.style.animationDelay=Math.random()*1+'s'})}
 randomLetterPulse();
 var player;
-function onYouTubeIframeAPIReady(){player=new YT.Player('player-container',{height:'1',width:'1',videoId:'aSbDE24I8DY',playerVars:{autoplay:0,controls:0},events:{onReady:onPlayerReady}})}
-function onPlayerReady(event){document.getElementById('playBtn').onclick=function(){player.playVideo();document.getElementById('playBtn').style.display='none';document.getElementById('pauseBtn').style.display='inline-block'};document.getElementById('pauseBtn').onclick=function(){player.pauseVideo();document.getElementById('pauseBtn').style.display='none';document.getElementById('playBtn').style.display='inline-block'};document.getElementById('volumeSlider').oninput=function(){player.setVolume(this.value)}}
+function onYouTubeIframeAPIReady(){player=new YT.Player('player-container',{height:'1',width:'1',videoId:'aSbDE24I8DY',playerVars:{autoplay:1,controls:0},events:{onReady:onPlayerReady}})}
+function onPlayerReady(event){player.playVideo();document.getElementById('playBtn').style.display='none';document.getElementById('pauseBtn').style.display='inline-block';document.getElementById('playBtn').onclick=function(){player.playVideo();document.getElementById('playBtn').style.display='none';document.getElementById('pauseBtn').style.display='inline-block'};document.getElementById('pauseBtn').onclick=function(){player.pauseVideo();document.getElementById('pauseBtn').style.display='none';document.getElementById('playBtn').style.display='inline-block'};document.getElementById('volumeSlider').oninput=function(){player.setVolume(this.value)}}
 </script></body></html>
