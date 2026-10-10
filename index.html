@@ -76,9 +76,9 @@
 <div class="sb"><span>Press F1 for help</span><span>Slide 1</span><span id="cpu">CPU Usage: 11%</span></div></div></div>
 <div class="win" id="w3"><div class="tb"><div class="ic"></div><b>Ultardio</b><u>_</u><u>▫</u><u>x</u></div><div class="body"><div class="frame pic"><span class="cap">ultardio.png</span></div></div></div>
 <div class="win" id="w4"><div class="tb"><div class="ic"></div><b>Music Player</b><u>_</u><u>▫</u><u onclick="document.getElementById('w4').style.display='none';document.getElementById('musicTask').style.display='flex'">_</u></div><div class="body" style="padding:15px;text-align:center">
-<div id="player-container" style="display:none"></div>
+<iframe id="player-container" title="Ultardio radio" allow="autoplay; encrypted-media" src="https://www.youtube.com/embed/aSbDE24I8DY?enablejsapi=1&controls=0&playsinline=1&loop=1&playlist=aSbDE24I8DY&rel=0" style="position:fixed;left:-400px;bottom:0;width:240px;height:135px;border:0;pointer-events:none"></iframe>
 <div class="music-controls" style="background:#000;border:2px solid;border-color:#555 #fff #fff #555;padding:15px">
-<div style="font:18px VT323,monospace;color:#00e5ff;margin-bottom:10px">🎵 NOW PLAYING</div>
+<div id="mlabel" style="font:18px VT323,monospace;color:#00e5ff;margin-bottom:10px">🎵 NOW PLAYING</div>
 <button id="playBtn" class="btn" style="font-size:20px;padding:10px 20px;margin-right:10px">▶ PLAY</button>
 <button id="pauseBtn" class="btn" style="font-size:20px;padding:10px 20px;margin-right:10px;display:none">⏸ PAUSE</button>
 <div style="display:inline-block;vertical-align:middle;margin-left:10px">
@@ -103,7 +103,7 @@
 <div id="task"><a class="s" href="#w1"><span style="font-size:18px">⊞</span>Start</a><a href="#w1"><i class="ic"></i>Ultardio</a><a href="#w2"><i class="ic"></i>Ultardio Meter</a><a href="#w3"><i class="ic"></i>ultardio.png</a><a id="musicTask" href="#w4" onclick="document.getElementById('w4').style.display='block';this.style.display='none'" style="display:none"><i class="ic"></i>Music Player</a><a href="#w5"><i class="ic"></i>$ULTARDIO Chart</a><a href="#w6"><i class="ic"></i>Contract Address</a><div id="clk">14:46</div></div>
 <script>
 var pb=document.getElementById('pb'),n=0,t=setInterval(function(){n=Math.min(100,n+Math.random()*12);pb.style.width=n+'%';if(n>=100)clearInterval(t)},180);
-document.getElementById('enter').onclick=function(){document.getElementById('land').style.display='none';document.getElementById('desk').style.display='block';mx()};
+document.getElementById('enter').onclick=function(){document.getElementById('land').style.display='none';document.getElementById('desk').style.display='block';mx();startMusic()};
 var rg=document.getElementById('rg');rg.oninput=function(){var v=+rg.value;document.getElementById('lt').textContent=v<25?'mildly normie':v<50?'getting there':v<80?'terminally online':'FULL ULTARDIO';document.getElementById('cpu').textContent='CPU Usage: '+Math.round(v/2+5)+'%'};
 function clk(){var d=new Date();document.getElementById('clk').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}clk();setInterval(clk,30000);
 var st=document.createElement('style');st.textContent='.tb u{cursor:pointer;user-select:none}.tb u:active{border-color:#404040 #fff #fff #404040}.win.big{position:fixed;left:6px;right:6px;top:6px;bottom:50px;z-index:25;overflow:auto;margin:0}';document.head.appendChild(st);
@@ -130,7 +130,18 @@ x.strokeStyle='#0a3a14';for(var g=1;g<5;g++){x.beginPath();x.moveTo(0,g*h/5);x.l
 for(var i=0;i<70;i++){var op=p,cl=p+(Math.random()-.46)*26;p=Math.max(80,Math.min(h-120,cl));var up=cl<op,col=up?'#22e05a':'#ff3030',px=10+i*(w-20)/70;x.strokeStyle=x.fillStyle=col;x.beginPath();x.moveTo(px,Math.min(op,cl)-8);x.lineTo(px,Math.max(op,cl)+8);x.stroke();x.fillRect(px-5,Math.min(op,cl),10,Math.max(3,Math.abs(cl-op)));x.globalAlpha=.4;x.fillRect(px-5,h-Math.random()*60,10,60);x.globalAlpha=1}}
 function randomLetterPulse(){var spans=document.querySelectorAll('.logo span');spans.forEach(function(span){span.style.animation='letterPulse 1s ease-in-out infinite';span.style.animationDelay=Math.random()*1+'s'})}
 randomLetterPulse();
-var player;
-function onYouTubeIframeAPIReady(){player=new YT.Player('player-container',{height:'1',width:'1',videoId:'aSbDE24I8DY',playerVars:{autoplay:1,controls:0},events:{onReady:onPlayerReady}})}
-function onPlayerReady(event){player.playVideo();document.getElementById('playBtn').style.display='none';document.getElementById('pauseBtn').style.display='inline-block';document.getElementById('playBtn').onclick=function(){player.playVideo();document.getElementById('playBtn').style.display='none';document.getElementById('pauseBtn').style.display='inline-block'};document.getElementById('pauseBtn').onclick=function(){player.pauseVideo();document.getElementById('pauseBtn').style.display='none';document.getElementById('playBtn').style.display='inline-block'};document.getElementById('volumeSlider').oninput=function(){player.setVolume(this.value)}}
+var player=null,ytReady=false,wantPlay=false;
+var playBtn=document.getElementById('playBtn'),pauseBtn=document.getElementById('pauseBtn'),vol=document.getElementById('volumeSlider'),mlabel=document.getElementById('mlabel');
+function setUI(on){playBtn.style.display=on?'none':'inline-block';pauseBtn.style.display=on?'inline-block':'none'}
+function note(t){mlabel.textContent='🎵 '+t}
+function tryPlay(){try{player.unMute();player.setVolume(+vol.value);player.playVideo()}catch(e){}}
+function startMusic(){wantPlay=true;if(ytReady)tryPlay()}
+function initYT(){if(player)return;player=new YT.Player('player-container',{events:{
+onReady:function(){ytReady=true;player.setVolume(+vol.value);if(wantPlay)tryPlay()},
+onStateChange:function(e){if(e.data===1){setUI(true);note('NOW PLAYING')}else if(e.data===2||e.data===0){setUI(false)}},
+onError:function(e){setUI(false);note('video blocked from embedding (error '+e.data+')')}}})}
+window.onYouTubeIframeAPIReady=initYT;if(window.YT&&YT.Player)initYT();
+playBtn.onclick=function(){wantPlay=true;if(ytReady)tryPlay()};
+pauseBtn.onclick=function(){wantPlay=false;if(ytReady)player.pauseVideo()};
+vol.oninput=function(){if(ytReady)player.setVolume(+this.value)};
 </script></body></html>
