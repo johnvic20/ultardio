@@ -99,7 +99,7 @@
 <div class="win" id="w7"><div class="tb"><div class="ic"></div><b>Burn Wallet</b><u>_</u><u>▫</u><u>x</u></div><div class="body">
 <div class="stats"><div class="st">Burn Address<b style="font-size:14px">0x0000...dead</b></div><div class="st">Burned Tokens<b id="burn_bal">…</b></div><div class="st">Percentage Burned<b id="burn_pct">…</b></div><div class="st">Status<b style="color:#008a1e">🔥 BURNING</b></div></div>
 <div class="ca"><div id="burn_addr">0x000000000000000000000000000000000000dead</div><a class="btn" id="cp_burn">COPY</a></div>
-<div class="foot"><span id="burn_lu">data: Cronoscan · loading…</span><a class="btn" target="_blank" rel="noopener" href="https://explorer.cronos.com/address/0x000000000000000000000000000000000000dead">Explorer</a></div>
+<div class="foot"><span id="burn_lu">data: Cronos RPC · loading…</span><a class="btn" target="_blank" rel="noopener" href="https://explorer.cronos.com/address/0x000000000000000000000000000000000000dead">Explorer</a></div>
 </div></div>
 </div>
 
@@ -136,15 +136,37 @@ function fb(){var r=document.createRange();r.selectNode(document.getElementById(
 try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}};
 var TOKEN_CONTRACT='0x32655171574d337eecc7BDF00A8585b00479bcbd';
 var BURN_ADDRESS='0x000000000000000000000000000000000000dead';
-var CRONOSCAN_API='https://api.cronoscan.com/api';
+// Public Cronos RPC nodes (no API key). Tried in order; first one that answers wins.
+var RPCS=['https://evm.cronos.org','https://cronos-evm-rpc.publicnode.com','https://1rpc.io/cro','https://cronos.drpc.org'];
+var BURN_REFRESH_MS=60000,BURN_CACHE_KEY='ultardio_burn_v1',burnRpcIdx=0,burnBusy=false;
 function fmtNum(v){v=+v;if(!isFinite(v))return '—';return v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)}
-function loadBurnData(){var balUrl=CRONOSCAN_API+'?module=account&action=tokenbalance&contractaddress='+TOKEN_CONTRACT+'&address='+BURN_ADDRESS+'&tag=latest';
-var supplyUrl=CRONOSCAN_API+'?module=stats&action=tokensupply&contractaddress='+TOKEN_CONTRACT;
-Promise.all([fetch(balUrl).then(function(r){return r.json()}),fetch(supplyUrl).then(function(r){return r.json()})]).then(function(data){
-var bal=data[0],sup=data[1];if(bal.status=='1'&&sup.status=='1'){var burned=+bal.result/1e18,total=+sup.result/1e18,pct=(burned/total*100).toFixed(2);
+function pad32(a){return a.toLowerCase().replace('0x','').padStart(64,'0')}
+function rpcBatch(url){var body=JSON.stringify([
+{jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:TOKEN_CONTRACT,data:'0x70a08231'+pad32(BURN_ADDRESS)},'latest']},
+{jsonrpc:'2.0',id:2,method:'eth_call',params:[{to:TOKEN_CONTRACT,data:'0x18160ddd'},'latest']},
+{jsonrpc:'2.0',id:3,method:'eth_call',params:[{to:TOKEN_CONTRACT,data:'0x313ce567'},'latest']}]);
+var ctl=window.AbortController?new AbortController():null,t=setTimeout(function(){if(ctl)ctl.abort()},8000);
+return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:body,signal:ctl?ctl.signal:undefined})
+.then(function(r){clearTimeout(t);if(!r.ok)throw new Error('http '+r.status);return r.json()})
+.then(function(j){if(!Array.isArray(j))throw new Error('no batch');var m={};j.forEach(function(x){m[x.id]=x});
+if(!m[1]||!m[2]||m[1].error||m[2].error||!m[1].result||!m[2].result)throw new Error('rpc error');
+return{bal:BigInt(m[1].result),sup:BigInt(m[2].result),dec:(m[3]&&m[3].result&&m[3].result!=='0x')?Number(BigInt(m[3].result)):18}})}
+function fetchBurn(i){i=i||0;if(i>=RPCS.length)return Promise.reject(new Error('all rpcs failed'));
+var idx=(burnRpcIdx+i)%RPCS.length;
+return rpcBatch(RPCS[idx]).then(function(d){burnRpcIdx=idx;return d},function(){return fetchBurn(i+1)})}
+function showBurn(d,note){var s=Math.pow(10,0),div=10n**BigInt(d.dec);
+var burned=Number(d.bal/div)+Number(d.bal%div)/Number(div),total=Number(d.sup/div)+Number(d.sup%div)/Number(div);
+var pct=total>0?(burned/total*100).toFixed(2):'0.00';
 document.getElementById('burn_bal').textContent=fmtNum(burned);document.getElementById('burn_pct').textContent=pct+'%';
-var l=document.getElementById('burn_lu');if(l)l.textContent='Last update '+new Date().toLocaleTimeString()+' · data: Cronoscan · refresh every 30s'}else{throw 0}}).catch(function(){var l=document.getElementById('burn_lu');if(l)l.textContent='data: Cronoscan unavailable · retrying…'})}
-loadBurnData();setInterval(loadBurnData,30000);
+var l=document.getElementById('burn_lu');if(l)l.textContent=note}
+function loadBurnData(){if(burnBusy||document.hidden)return;burnBusy=true;
+fetchBurn().then(function(d){try{localStorage.setItem(BURN_CACHE_KEY,JSON.stringify({b:d.bal.toString(),s:d.sup.toString(),d:d.dec,t:Date.now()}))}catch(e){}
+showBurn(d,'Last update '+new Date().toLocaleTimeString()+' · data: Cronos RPC · refresh every 60s')})
+.catch(function(){var l=document.getElementById('burn_lu');if(l&&!/Last update|cached/.test(l.textContent))l.textContent='data: Cronos RPC unavailable · retrying…';else if(l&&/Last update/.test(l.textContent))l.textContent=l.textContent.replace(/·.*$/,'· retrying…')})
+.then(function(){burnBusy=false})}
+(function(){try{var c=JSON.parse(localStorage.getItem(BURN_CACHE_KEY)||'null');if(c&&Date.now()-c.t<6*3600e3)showBurn({bal:BigInt(c.b),sup:BigInt(c.s),dec:c.d},'cached '+new Date(c.t).toLocaleTimeString()+' · data: Cronos RPC · updating…')}catch(e){}})();
+loadBurnData();setInterval(loadBurnData,BURN_REFRESH_MS);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)loadBurnData()});
 function mx(){var c=document.getElementById('mx'),x=c.getContext('2d'),ch='01αβγδλπΩΣ∇≈±0123456789abcdef'.split(''),cols,dr;
 function rs(){c.width=innerWidth;c.height=innerHeight;cols=Math.floor(c.width/22);dr=[];for(var i=0;i<cols;i++)dr.push(Math.random()*50)}rs();onresize=rs;
 setInterval(function(){x.fillStyle='rgba(0,0,0,.12)';x.fillRect(0,0,c.width,c.height);x.fillStyle='#1a5a2a';x.font='16px VT323,monospace';for(var i=0;i<cols;i++){x.fillText(ch[Math.floor(Math.random()*ch.length)],i*22,dr[i]*18);if(dr[i]*18>c.height&&Math.random()>.97)dr[i]=0;dr[i]++}},90)}
