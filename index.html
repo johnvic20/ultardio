@@ -96,11 +96,16 @@
 <div class="foot"><span id="lu">data: DexScreener · Cronos · loading…</span><span style="flex:0 0 auto">Cronos</span><a class="btn" target="_blank" rel="noopener" href="https://obsidian.finance/?outputChain=25&outputCurrency=0x32655171574d337eecc7bdf00a8585b00479bcbd">Buy</a><a class="btn" target="_blank" rel="noopener" href="https://dexscreener.com/cronos/0x196796a6443e186f3c73c2a5671f14124044edfc">Dex</a></div></div></div>
 
 <div class="win" id="w6"><div class="tb"><div class="ic"></div><b>Contract Address</b><u>_</u><u>▫</u><u>x</u></div><div class="body"><div class="ca"><div id="ca">0x32655171574d337eecc7BDF00A8585b00479bcbd</div><a class="btn" id="cp">COPY</a></div></div></div>
+<div class="win" id="w7"><div class="tb"><div class="ic"></div><b>Burn Wallet</b><u>_</u><u>▫</u><u>x</u></div><div class="body">
+<div class="stats"><div class="st">Burn Address<b style="font-size:14px">0x0000...dead</b></div><div class="st">Burned Tokens<b id="burn_bal">…</b></div><div class="st">Percentage Burned<b id="burn_pct">…</b></div><div class="st">Status<b style="color:#008a1e">🔥 BURNING</b></div></div>
+<div class="ca"><div id="burn_addr">0x000000000000000000000000000000000000dead</div><a class="btn" id="cp_burn">COPY</a></div>
+<div class="foot"><span id="burn_lu">data: Cronoscan · loading…</span><a class="btn" target="_blank" rel="noopener" href="https://explorer.cronos.com/address/0x000000000000000000000000000000000000dead">Explorer</a></div>
+</div></div>
 </div>
 
 
 
-<div id="task"><a class="s" href="#w1"><span style="font-size:18px">⊞</span>Start</a><a href="#w1"><i class="ic"></i>Ultardio</a><a href="#w2"><i class="ic"></i>Ultardio Meter</a><a href="#w3"><i class="ic"></i>ultardio.png</a><a id="musicTask" href="#w4" onclick="document.getElementById('w4').style.display='block';this.style.display='none'" style="display:none"><i class="ic"></i>Music Player</a><a href="#w5"><i class="ic"></i>$ULTARDIO Chart</a><a href="#w6"><i class="ic"></i>Contract Address</a><div id="clk">14:46</div></div>
+<div id="task"><a class="s" href="#w1"><span style="font-size:18px">⊞</span>Start</a><a href="#w1"><i class="ic"></i>Ultardio</a><a href="#w2"><i class="ic"></i>Ultardio Meter</a><a href="#w3"><i class="ic"></i>ultardio.png</a><a id="musicTask" href="#w4" onclick="document.getElementById('w4').style.display='block';this.style.display='none'" style="display:none"><i class="ic"></i>Music Player</a><a href="#w5"><i class="ic"></i>$ULTARDIO Chart</a><a href="#w6"><i class="ic"></i>Contract Address</a><a href="#w7"><i class="ic"></i>Burn Wallet</a><div id="clk">14:46</div></div>
 <script>
 var pb=document.getElementById('pb'),n=0,t=setInterval(function(){n=Math.min(100,n+Math.random()*12);pb.style.width=n+'%';if(n>=100)clearInterval(t)},180);
 document.getElementById('enter').onclick=function(){document.getElementById('land').style.display='none';document.getElementById('desk').style.display='block';mx();startMusic()};
@@ -126,6 +131,20 @@ loadLive();setInterval(loadLive,20000);
 document.getElementById('cp').onclick=function(){var t=document.getElementById('ca').textContent,b=this;function ok(){b.textContent='COPIED!';setTimeout(function(){b.textContent='COPY'},1500)}
 function fb(){var r=document.createRange();r.selectNode(document.getElementById('ca'));var s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');ok()}catch(e){}}
 try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}};
+document.getElementById('cp_burn').onclick=function(){var t=document.getElementById('burn_addr').textContent,b=this;function ok(){b.textContent='COPIED!';setTimeout(function(){b.textContent='COPY'},1500)}
+function fb(){var r=document.createRange();r.selectNode(document.getElementById('burn_addr'));var s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');ok()}catch(e){}}
+try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}};
+var TOKEN_CONTRACT='0x32655171574d337eecc7BDF00A8585b00479bcbd';
+var BURN_ADDRESS='0x000000000000000000000000000000000000dead';
+var CRONOSCAN_API='https://api.cronoscan.com/api';
+function fmtNum(v){v=+v;if(!isFinite(v))return '—';return v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)}
+function loadBurnData(){var balUrl=CRONOSCAN_API+'?module=account&action=tokenbalance&contractaddress='+TOKEN_CONTRACT+'&address='+BURN_ADDRESS+'&tag=latest';
+var supplyUrl=CRONOSCAN_API+'?module=stats&action=tokensupply&contractaddress='+TOKEN_CONTRACT;
+Promise.all([fetch(balUrl).then(function(r){return r.json()}),fetch(supplyUrl).then(function(r){return r.json()})]).then(function(data){
+var bal=data[0],sup=data[1];if(bal.status=='1'&&sup.status=='1'){var burned=+bal.result/1e18,total=+sup.result/1e18,pct=(burned/total*100).toFixed(2);
+document.getElementById('burn_bal').textContent=fmtNum(burned);document.getElementById('burn_pct').textContent=pct+'%';
+var l=document.getElementById('burn_lu');if(l)l.textContent='Last update '+new Date().toLocaleTimeString()+' · data: Cronoscan · refresh every 30s'}else{throw 0}}).catch(function(){var l=document.getElementById('burn_lu');if(l)l.textContent='data: Cronoscan unavailable · retrying…'})}
+loadBurnData();setInterval(loadBurnData,30000);
 function mx(){var c=document.getElementById('mx'),x=c.getContext('2d'),ch='01αβγδλπΩΣ∇≈±0123456789abcdef'.split(''),cols,dr;
 function rs(){c.width=innerWidth;c.height=innerHeight;cols=Math.floor(c.width/22);dr=[];for(var i=0;i<cols;i++)dr.push(Math.random()*50)}rs();onresize=rs;
 setInterval(function(){x.fillStyle='rgba(0,0,0,.12)';x.fillRect(0,0,c.width,c.height);x.fillStyle='#1a5a2a';x.font='16px VT323,monospace';for(var i=0;i<cols;i++){x.fillText(ch[Math.floor(Math.random()*ch.length)],i*22,dr[i]*18);if(dr[i]*18>c.height&&Math.random()>.97)dr[i]=0;dr[i]++}},90)}
